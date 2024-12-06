@@ -1,5 +1,10 @@
 package main.java.com.strategy;
 
-public class SchedulingStrategy {
-    
+import java.util.List;
+
+import main.java.com.model.CPUProcess;
+
+public interface SchedulingStrategy {
+
+    List<CPUProcess> schedule(List<CPUProcess> processes);
 }
