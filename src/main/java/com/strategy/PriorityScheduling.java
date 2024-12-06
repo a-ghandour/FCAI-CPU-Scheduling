@@ -1,6 +1,8 @@
 package main.java.com.strategy;
 
 import main.java.com.model.CPUProcess;
+
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -10,16 +12,24 @@ public class PriorityScheduling implements SchedulingStrategy {
     public List<CPUProcess> schedule(List<CPUProcess> processes) {
        processes.sort(Comparator.comparingInt(CPUProcess::getArrivalTime)
                .thenComparingInt(CPUProcess::getPriority));
-
+        List<CPUProcess> scheduledProcesses = new ArrayList<>();
         int currentTime = 0;
-        for (CPUProcess process : processes) {
-            if (currentTime < process.getArrivalTime()) {
-                currentTime = process.getArrivalTime();
+        while (!processes.isEmpty()){
+            if (currentTime < processes.getFirst().getArrivalTime()) {
+                currentTime = processes.getFirst().getArrivalTime();
             }
-            process.setWaitingTime(currentTime - process.getArrivalTime());
-            currentTime += process.getBurstTime();
-            process.setTurnAroundTime(process.getWaitingTime() + process.getBurstTime());
+            processes.getFirst().setWaitingTime(currentTime - processes.getFirst().getArrivalTime());
+            currentTime += processes.getFirst().getBurstTime();
+            processes.getFirst().setTurnAroundTime(currentTime);
+            scheduledProcesses.add(processes.remove(0));
+            for (CPUProcess process : processes) {
+                if (process.getArrivalTime() < currentTime)
+                    process.setFakeArrivalTime(currentTime);
+                else break;
+            }
+            processes.sort(Comparator.comparingInt(CPUProcess::getFakeArrivalTime)
+                    .thenComparingInt(CPUProcess::getPriority));
         }
-        return processes;
+        return scheduledProcesses;
     }
 }

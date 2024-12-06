@@ -5,6 +5,7 @@ public class CPUProcess {
     private String color;
     private int burstTime;
     private int arrivalTime;
+    private int fakeArrivalTime;
     private int priority;
     private int turnAroundTime;
     private int waitingTime;
@@ -16,6 +17,7 @@ public class CPUProcess {
         this.burstTime = burstTime;
         this.priority = priority;
         this.turnAroundTime = turnAroundTime;
+        this.fakeArrivalTime = arrivalTime;
     }
     
     public CPUProcess(String name, int arrivalTime, int burstTime, int priority)
@@ -32,7 +34,12 @@ public class CPUProcess {
     {
         this.burstTime = burstTime;
     }
-    
+
+    public void setFakeArrivalTime(int currnetTime)
+    {
+        this.fakeArrivalTime = currnetTime;
+    }
+
     public void setWaitingTime(int waitingTime)
     {
         this.waitingTime = waitingTime;
@@ -52,7 +59,12 @@ public class CPUProcess {
     {
         return this.arrivalTime;
     }
-    
+
+    public int getFakeArrivalTime()
+    {
+        return this.fakeArrivalTime;
+    }
+
     public int getBurstTime()
     {
         return this.burstTime;
