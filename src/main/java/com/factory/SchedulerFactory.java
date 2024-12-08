@@ -9,6 +9,8 @@ public class SchedulerFactory {
             case "priority":
                 return new PriorityScheduling();
             // Add other strategies as needed
+            case "srtf":
+                return new SRTFScheduling();
             default:
                 throw new IllegalArgumentException("Unknown scheduler type: " + type);
         }
