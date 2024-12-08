@@ -1,8 +1,9 @@
 package main.java.com.model;
+import java.awt.Color;
 
 public class CPUProcess {
     private String name;
-    private String color;
+    private Color color;
     private int burstTime;
     private int arrivalTime;
     private int fakeArrivalTime;
@@ -11,7 +12,7 @@ public class CPUProcess {
     private int waitingTime;
     private int remainingTime;
 
-    private CPUProcess(String name, int arrivalTime, int burstTime, int priority, int waitingTime, int turnAroundTime)
+    private CPUProcess(String name, int arrivalTime, int burstTime, int priority, int waitingTime, int turnAroundTime,Color color)
     {
         this.name = name;
         this.arrivalTime = arrivalTime;
@@ -20,19 +21,19 @@ public class CPUProcess {
         this.remainingTime = burstTime;
         this.turnAroundTime = turnAroundTime;
         this.fakeArrivalTime = arrivalTime;
-        this.waitingTime = waitingTime;
+        this.color = color;
     }
-    
+
     public CPUProcess(String name, int arrivalTime, int burstTime, int priority)
     {
-        this(name, arrivalTime, burstTime, priority, 0, 0);
+        this(name, arrivalTime, burstTime, priority, 0,0, Color.DARK_GRAY);
     }
-    
+
     public CPUProcess(String name, int arrivalTime, int burstTime)
     {
-        this(name, arrivalTime, burstTime, 0, 0, 0);
+        this(name, arrivalTime, burstTime, 0, 0, 0,Color.DARK_GRAY);
     }
-    
+
     public void setBurstTime(int burstTime)
     {
         this.burstTime = burstTime;
@@ -48,7 +49,11 @@ public class CPUProcess {
     {
         this.waitingTime = waitingTime;
     }
-    
+    public void setColor(Color color)
+    {
+        this.color = color;
+    }
+
     public void setTurnAroundTime(int turnAroundTime)
     {
         this.turnAroundTime = turnAroundTime;
@@ -62,7 +67,7 @@ public class CPUProcess {
     {
         return this.name;
     }
-    
+
     public int getArrivalTime()
     {
         return this.arrivalTime;
@@ -77,17 +82,17 @@ public class CPUProcess {
     {
         return this.burstTime;
     }
-    
+
     public int getPriority()
     {
         return this.priority;
     }
-    
+
     public int getWaitingTime()
     {
         return this.waitingTime;
     }
-    
+
     public int getTurnAroundTime()
     {
         return this.turnAroundTime;
@@ -95,5 +100,9 @@ public class CPUProcess {
     public int getRemainingTime()
     {
         return this.remainingTime;
+    }
+
+    public Color getColor() {
+        return color; // Getter for color
     }
 }
