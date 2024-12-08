@@ -1,7 +1,6 @@
 package main.java.com.strategy;
 
 import main.java.com.model.CPUProcess;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -9,7 +8,7 @@ import java.util.List;
 public class PriorityScheduling implements SchedulingStrategy {
 
     @Override
-    public List<CPUProcess> schedule(List<CPUProcess> processes) {
+    public List<CPUProcess> schedule(List<CPUProcess> processes, int contextSwitchTime) {
        processes.sort(Comparator.comparingInt(CPUProcess::getArrivalTime)
                .thenComparingInt(CPUProcess::getPriority));
         List<CPUProcess> scheduledProcesses = new ArrayList<>();
@@ -22,6 +21,7 @@ public class PriorityScheduling implements SchedulingStrategy {
             currentTime += processes.getFirst().getBurstTime();
             processes.getFirst().setTurnAroundTime(currentTime);
             scheduledProcesses.add(processes.remove(0));
+            currentTime += contextSwitchTime;
             for (CPUProcess process : processes) {
                 if (process.getArrivalTime() < currentTime)
                     process.setFakeArrivalTime(currentTime);

@@ -20,18 +20,19 @@ public class CPUProcess {
         this.remainingTime = burstTime;
         this.turnAroundTime = turnAroundTime;
         this.fakeArrivalTime = arrivalTime;
+        this.waitingTime = waitingTime;
     }
-
+    
     public CPUProcess(String name, int arrivalTime, int burstTime, int priority)
     {
         this(name, arrivalTime, burstTime, priority, 0, 0);
     }
-
+    
     public CPUProcess(String name, int arrivalTime, int burstTime)
     {
         this(name, arrivalTime, burstTime, 0, 0, 0);
     }
-
+    
     public void setBurstTime(int burstTime)
     {
         this.burstTime = burstTime;
@@ -47,7 +48,7 @@ public class CPUProcess {
     {
         this.waitingTime = waitingTime;
     }
-
+    
     public void setTurnAroundTime(int turnAroundTime)
     {
         this.turnAroundTime = turnAroundTime;
@@ -61,7 +62,7 @@ public class CPUProcess {
     {
         return this.name;
     }
-
+    
     public int getArrivalTime()
     {
         return this.arrivalTime;
@@ -76,17 +77,17 @@ public class CPUProcess {
     {
         return this.burstTime;
     }
-
+    
     public int getPriority()
     {
         return this.priority;
     }
-
+    
     public int getWaitingTime()
     {
         return this.waitingTime;
     }
-
+    
     public int getTurnAroundTime()
     {
         return this.turnAroundTime;

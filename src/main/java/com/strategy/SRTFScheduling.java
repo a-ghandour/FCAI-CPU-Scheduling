@@ -10,7 +10,7 @@ import java.util.Objects;
 public class SRTFScheduling implements SchedulingStrategy {
 
     @Override
-    public List<CPUProcess> schedule(List<CPUProcess> processes) {
+    public List<CPUProcess> schedule(List<CPUProcess> processes, int contextSwitchingTime) {
         processes.sort(Comparator.comparingInt(CPUProcess::getArrivalTime));
         List<CPUProcess> scheduledProcesses = new ArrayList<>();
         List<CPUProcess> readyQueue = new ArrayList<>();
@@ -37,6 +37,7 @@ public class SRTFScheduling implements SchedulingStrategy {
                 if (currentProcess.getRemainingTime() == 0) {
                     currentProcess.setTurnAroundTime(currentTime - currentProcess.getArrivalTime());
                     currentProcess.setWaitingTime(currentProcess.getTurnAroundTime() - currentProcess.getBurstTime());
+                    currentTime+=contextSwitchingTime;
                     completedProcesses++;
                     readyQueue.remove(currentProcess);
                 }
