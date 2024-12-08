@@ -1,6 +1,7 @@
 package main.java.com.factory;
 
 import main.java.com.strategy.PriorityScheduling;
+import main.java.com.strategy.SRTFScheduling;
 import main.java.com.strategy.SchedulingStrategy;
 
 public class SchedulerFactory {
@@ -8,7 +9,6 @@ public class SchedulerFactory {
         switch (type.toLowerCase()) {
             case "priority":
                 return new PriorityScheduling();
-            // Add other strategies as needed
             case "srtf":
                 return new SRTFScheduling();
             default:

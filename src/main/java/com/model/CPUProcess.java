@@ -35,6 +35,7 @@ public class CPUProcess {
     public void setBurstTime(int burstTime)
     {
         this.burstTime = burstTime;
+        this.remainingTime = burstTime;
     }
 
     public void setFakeArrivalTime(int currnetTime)
@@ -50,6 +51,10 @@ public class CPUProcess {
     public void setTurnAroundTime(int turnAroundTime)
     {
         this.turnAroundTime = turnAroundTime;
+    }
+    public void setRemainingTime(int remainingTime)
+    {
+        this.remainingTime = remainingTime;
     }
 
     public String getName()
@@ -85,5 +90,9 @@ public class CPUProcess {
     public int getTurnAroundTime()
     {
         return this.turnAroundTime;
+    }
+    public int getRemainingTime()
+    {
+        return this.remainingTime;
     }
 }

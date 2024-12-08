@@ -7,6 +7,8 @@ import main.java.com.strategy.SchedulingStrategy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
+import java.util.HashSet;
 
 public class Main {
     public static void main(String[] args) {
@@ -29,19 +31,37 @@ public class Main {
             processes.add(new CPUProcess(name, arrivalTime, burstTime, priority));
         }
 
-        SchedulingStrategy scheduler = SchedulerFactory.getScheduler("priority");
-        List<CPUProcess> scheduledProcesses = scheduler.schedule(processes);
+        System.out.print("Enter scheduling type (priority/srtf): ");
+        String schedulerType = scanner.next();
 
-        System.out.println("Execution Order:");
+        SchedulingStrategy scheduler;
+        try {
+            scheduler = SchedulerFactory.getScheduler(schedulerType);
+        } catch (IllegalArgumentException e) {
+            System.out.println("Invalid scheduling type. Please use 'priority' or 'srtf'.");
+            return;
+        }
+
+        List<CPUProcess> scheduledProcesses = scheduler.schedule(processes);
+        Set<CPUProcess> scheduledSet = new HashSet<>(scheduledProcesses);
+        System.out.println("\nExecution Order:");
         for (CPUProcess process : scheduledProcesses) {
             System.out.println("Process: " + process.getName());
         }
 
+        double totalWaitingTime = 0;
+        double totalTurnaroundTime = 0;
+
         System.out.println("\nDetails:");
-        for (CPUProcess process : scheduledProcesses) {
+        for (CPUProcess process : scheduledSet) {
             System.out.println("Process " + process.getName() + ": Waiting Time = " +
                     process.getWaitingTime() + ", Turnaround Time = " +
                     process.getTurnAroundTime());
+            totalWaitingTime += process.getWaitingTime();
+            totalTurnaroundTime += process.getTurnAroundTime();
         }
+
+        System.out.printf("\nAverage Waiting Time: %.2f\n", totalWaitingTime / n);
+        System.out.printf("Average Turnaround Time: %.2f\n", totalTurnaroundTime / n);
     }
 }
