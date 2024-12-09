@@ -19,7 +19,8 @@ public class PriorityScheduling implements SchedulingStrategy {
             }
             processes.getFirst().setWaitingTime(currentTime - processes.getFirst().getArrivalTime());
             currentTime += processes.getFirst().getBurstTime();
-            processes.getFirst().setTurnAroundTime(currentTime);
+            int arrivalTime = processes.getFirst().getArrivalTime();
+            processes.getFirst().setTurnAroundTime(currentTime - arrivalTime);
             scheduledProcesses.add(processes.remove(0));
             currentTime += contextSwitchTime;
             for (CPUProcess process : processes) {

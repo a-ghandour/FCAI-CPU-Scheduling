@@ -20,32 +20,43 @@ public class CLIOutput {
         return scanner.nextInt();
     }
 
-    public static List<CPUProcess> getProcessesInput(int n) {
+    public static List<CPUProcess> getProcessesInput(String schedulerType, int n) {
         List<CPUProcess> processes = new ArrayList<>();
         for (int i = 0; i < n; i++) {
-            System.out.println("Enter details for process " + (i+1));
+            System.out.println("Enter details for process " + (i + 1));
             System.out.print("Name: ");
             String name = scanner.next();
-            System.out.print("Priority: ");
-            int priority = scanner.nextInt();
             System.out.print("Arrival Time: ");
             int arrivalTime = scanner.nextInt();
             System.out.print("Burst Time: ");
             int burstTime = scanner.nextInt();
 
-            processes.add(new CPUProcess(name, arrivalTime, burstTime, priority));
+            if (schedulerType.equalsIgnoreCase("priority") || schedulerType.equalsIgnoreCase("fcai")) {
+                System.out.print("Priority: ");
+                int priority = scanner.nextInt();
+
+                if (schedulerType.equalsIgnoreCase("fcai")) {
+                    System.out.print("Quantum: ");
+                    int quantum = scanner.nextInt();
+                    processes.add(new CPUProcess(name, arrivalTime, burstTime, priority, quantum));
+                } else {
+                    processes.add(new CPUProcess(name, arrivalTime, burstTime, priority));
+                }
+            } else {
+                processes.add(new CPUProcess(name, arrivalTime, burstTime));
+            }
         }
         return processes;
     }
 
     public static String getSchedulerType() {
-        System.out.print("Enter scheduling type (priority/srtf): ");
+        System.out.print("Enter scheduling type (priority/srtf/FCAI/sjf): ");
         return scanner.next();
     }
 
 
     public static void printInvalidSchedulerType() {
-        System.out.println("Invalid scheduling type. Please use 'priority' or 'srtf'.");
+        System.out.println("Invalid scheduling type. Please use 'priority' or 'srtf' or 'fcai' or 'sjf'.");
     }
 
     public static void printExecutionOrder(List<CPUProcess> scheduledProcesses) {
@@ -70,5 +81,12 @@ public class CLIOutput {
 
         System.out.printf("\nAverage Waiting Time: %.2f\n", totalWaitingTime / totalProcesses);
         System.out.printf("Average Turnaround Time: %.2f\n", totalTurnaroundTime / totalProcesses);
+    }
+
+    public static void printMessages(List<String> messages) {
+        System.out.println("\nScheduler Messages:");
+        for (String message : messages) {
+            System.out.println(message);
+        }
     }
 }

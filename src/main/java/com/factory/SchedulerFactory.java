@@ -1,8 +1,6 @@
 package main.java.com.factory;
 
-import main.java.com.strategy.PriorityScheduling;
-import main.java.com.strategy.SRTFScheduling;
-import main.java.com.strategy.SchedulingStrategy;
+import main.java.com.strategy.*;
 
 public class SchedulerFactory {
     public static SchedulingStrategy getScheduler(String type) {
@@ -11,6 +9,10 @@ public class SchedulerFactory {
                 return new PriorityScheduling();
             case "srtf":
                 return new SRTFScheduling();
+            case "fcai":
+                return new FCAIScheduling();
+            case "sjf":
+                return new SJFScheduling();
             default:
                 throw new IllegalArgumentException("Unknown scheduler type: " + type);
         }

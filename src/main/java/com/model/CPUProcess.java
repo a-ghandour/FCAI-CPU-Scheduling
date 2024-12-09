@@ -12,8 +12,10 @@ public class CPUProcess {
     private int waitingTime;
     private int remainingTime;
     private int agingPriority = 0;
+    private int quantum;
+    private double FCAIFactor;
 
-    private CPUProcess(String name, int arrivalTime, int burstTime, int priority, int waitingTime, int turnAroundTime,Color color)
+    private CPUProcess(String name, int arrivalTime, int burstTime, int priority, int quantum, Color color, int waitingTime, int turnAroundTime)
     {
         this.name = name;
         this.arrivalTime = arrivalTime;
@@ -23,18 +25,25 @@ public class CPUProcess {
         this.turnAroundTime = turnAroundTime;
         this.fakeArrivalTime = arrivalTime;
         this.color = color;
+        this.waitingTime = waitingTime;
+        this.quantum = quantum;
     }
-
+    
     public CPUProcess(String name, int arrivalTime, int burstTime, int priority)
     {
-        this(name, arrivalTime, burstTime, priority, 0,0, Color.DARK_GRAY);
+        this(name, arrivalTime, burstTime, priority, 0, Color.DARK_GRAY, 0, 0);
     }
 
+    public CPUProcess(String name, int arrivalTime, int burstTime, int priority, int quantum)
+    {
+        this(name, arrivalTime, burstTime, priority, quantum, Color.DARK_GRAY, 0, 0);
+    }
+    
     public CPUProcess(String name, int arrivalTime, int burstTime)
     {
-        this(name, arrivalTime, burstTime, 0, 0, 0,Color.DARK_GRAY);
+        this(name, arrivalTime, burstTime, 0, 0,Color.DARK_GRAY, 0, 0);
     }
-
+    
     public void setBurstTime(int burstTime)
     {
         this.burstTime = burstTime;
@@ -70,9 +79,29 @@ public class CPUProcess {
         return agingPriority;
     }
 
+    public void setPriority(int priority)
+    {
+        this.priority = priority;
+    }
+
+    public void setFCAIFactor(double FCAIFactor) {
+        this.FCAIFactor = FCAIFactor;
+    }
+
+    public void setQuantum(int quantum) {
+        this.quantum = quantum;
+    }
+    public double getFCAIFactor() {
+        return FCAIFactor;
+    }
+
     public String getName()
     {
         return this.name;
+    }
+
+    public int getQuantum() {
+        return quantum;
     }
 
     public int getArrivalTime()
@@ -89,17 +118,17 @@ public class CPUProcess {
     {
         return this.burstTime;
     }
-
+    
     public int getPriority()
     {
         return this.priority;
     }
-
+    
     public int getWaitingTime()
     {
         return this.waitingTime;
     }
-
+    
     public int getTurnAroundTime()
     {
         return this.turnAroundTime;
