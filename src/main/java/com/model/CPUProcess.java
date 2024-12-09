@@ -11,6 +11,7 @@ public class CPUProcess {
     private int turnAroundTime;
     private int waitingTime;
     private int remainingTime;
+    private int agingPriority = 0;
 
     private CPUProcess(String name, int arrivalTime, int burstTime, int priority, int waitingTime, int turnAroundTime,Color color)
     {
@@ -61,6 +62,12 @@ public class CPUProcess {
     public void setRemainingTime(int remainingTime)
     {
         this.remainingTime = remainingTime;
+    }
+    public void setAgingPriority(int agingPriority) {
+        this.agingPriority = agingPriority;
+    }
+    public int getAgingPriority() {
+        return agingPriority;
     }
 
     public String getName()

@@ -1,5 +1,11 @@
 package main.java.com.view;
 
+import main.java.com.view.MainWindow;
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 import main.java.com.factory.SchedulerFactory;
 import main.java.com.model.CPUProcess;
 import main.java.com.strategy.SchedulingStrategy;
@@ -9,13 +15,8 @@ import java.util.Set;
 import java.util.LinkedHashSet;
 
 
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
-
-public class CPUSchedulerGUI extends JFrame {
+public class CPUSchedulerMainWindow extends JFrame {
+    private int contextSwitchingTime;
     private List<CPUProcess> processes = new ArrayList<>();
     private Color currentColor = Color.BLUE;
 
@@ -33,17 +34,110 @@ public class CPUSchedulerGUI extends JFrame {
     private GanttChartPanel ganttChart;
     private boolean schedulerHasRun = false;
 
-    public CPUSchedulerGUI() {
+    // Constructor with context switching time
+    public CPUSchedulerMainWindow(int contextSwitchingTime) {
+        this.contextSwitchingTime = contextSwitchingTime;
         initializeComponents();
         createLayout();
-        setTitle("CPU Scheduler Simulator");
-        setSize(1200, 800);
+        setTitle("CPU Scheduler Simulator - Process Configuration");
+        setSize(1200, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
+        contextSwitchingTimeField.setText(String.valueOf(contextSwitchingTime));
     }
 
-    private void initializeComponents() {
+    // Default constructor
+    public CPUSchedulerMainWindow() {
+        this(0);
+    }
 
+    // Implement missing method for input panel
+    private JPanel createInputPanel() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        // Name Label and Field
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        panel.add(new JLabel("Process Name:"), gbc);
+        gbc.gridx = 1;
+        panel.add(nameField, gbc);
+
+        // Priority Label and Field
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        panel.add(new JLabel("Priority:"), gbc);
+        gbc.gridx = 1;
+        panel.add(priorityField, gbc);
+
+        // Arrival Time Label and Field
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        panel.add(new JLabel("Arrival Time:"), gbc);
+        gbc.gridx = 1;
+        panel.add(arrivalTimeField, gbc);
+
+        // Burst Time Label and Field
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        panel.add(new JLabel("Burst Time:"), gbc);
+        gbc.gridx = 1;
+        panel.add(burstTimeField, gbc);
+
+        // Context Switching Time
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        panel.add(new JLabel("Context Switching Time:"), gbc);
+        gbc.gridx = 1;
+        panel.add(contextSwitchingTimeField, gbc);
+
+        // Scheduler Type
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        panel.add(new JLabel("Scheduler Type:"), gbc);
+        gbc.gridx = 1;
+        panel.add(schedulerTypeComboBox, gbc);
+
+        // Color Button
+        gbc.gridx = 0;
+        gbc.gridy = 6;
+        gbc.gridwidth = 2;
+        panel.add(colorButton, gbc);
+
+        // Add Process Button
+        JButton addProcessButton = new JButton("Add Process");
+        addProcessButton.addActionListener(e -> addProcess());
+        gbc.gridy = 7;
+        panel.add(addProcessButton, gbc);
+
+        // Run Scheduler Button
+        JButton runSchedulerButton = new JButton("Run Scheduler");
+        runSchedulerButton.addActionListener(e -> runScheduler());
+        gbc.gridy = 8;
+        panel.add(runSchedulerButton, gbc);
+
+        // Clear All Button
+        JButton clearAllButton = new JButton("Clear All");
+        clearAllButton.addActionListener(e -> clearAll());
+        gbc.gridy = 9;
+        panel.add(clearAllButton, gbc);
+
+        return panel;
+    }
+
+    // Implement missing method for color selection
+    private void chooseColor() {
+        Color selectedColor = JColorChooser.showDialog(this, "Choose Process Color", currentColor);
+        if (selectedColor != null) {
+            currentColor = selectedColor;
+            colorButton.setBackground(currentColor);
+        }
+    }
+
+
+    private void initializeComponents() {
         // Input Fields
         nameField = new JTextField(10);
         nameField.setToolTipText("Process Name");
@@ -58,7 +152,7 @@ public class CPUSchedulerGUI extends JFrame {
         burstTimeField.setToolTipText("Burst Time");
 
         contextSwitchingTimeField = new JTextField(10);
-        contextSwitchingTimeField.setToolTipText("context switching time:");
+        contextSwitchingTimeField.setToolTipText("Context Switching Time");
 
         // Color Button
         colorButton = new JButton("Choose Color");
@@ -69,7 +163,7 @@ public class CPUSchedulerGUI extends JFrame {
         schedulerTypeComboBox = new JComboBox<>(new String[]{"Priority", "SRTF", "FCFS"});
 
         // Process Table
-        String[] columnNames = {"Name", "Priority", "Arrival Time", "Burst Time","context switching time", "Color"};
+        String[] columnNames = {"Name", "Priority", "Arrival Time", "Burst Time", "Context Switching Time", "Color"};
         tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -79,8 +173,8 @@ public class CPUSchedulerGUI extends JFrame {
         processTable = new JTable(tableModel);
         processTable.getColumnModel().getColumn(5).setCellRenderer(new ColorCellRenderer());
 
-        // Gantt Chart
-        ganttChart = new GanttChartPanel();
+        // Gantt Chart with reduced time unit and height
+        ganttChart = new GanttChartPanel(20, 25, 60, 30);
 
         // Output Area
         outputArea = new JTextArea();
@@ -107,67 +201,16 @@ public class CPUSchedulerGUI extends JFrame {
         outputPanel.add(new JScrollPane(outputArea), BorderLayout.CENTER);
         outputPanel.setPreferredSize(new Dimension(300, 0));
         add(outputPanel, BorderLayout.EAST);
+
+        // Back Button to return to main window
+        JButton backButton = new JButton("Back to Main Window");
+        backButton.addActionListener(e -> returnToMainWindow());
+        add(backButton, BorderLayout.SOUTH);
     }
 
-    private JPanel createInputPanel() {
-        JPanel inputPanel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-
-        // Add components with proper spacing
-        addToPanel(inputPanel, new JLabel("Process Name:"), nameField, gbc, 0);
-        addToPanel(inputPanel, new JLabel("Priority:"), priorityField, gbc, 1);
-        addToPanel(inputPanel, new JLabel("Arrival Time:"), arrivalTimeField, gbc, 2);
-        addToPanel(inputPanel, new JLabel("Burst Time:"), burstTimeField, gbc, 3);
-        addToPanel(inputPanel, new JLabel("context switchingTime:"), contextSwitchingTimeField, gbc, 4);
-
-
-        gbc.gridx = 0;
-        gbc.gridy = 5;
-        gbc.gridwidth = 2;
-        inputPanel.add(colorButton, gbc);
-
-        JButton addButton = new JButton("Add Process");
-        addButton.addActionListener(e -> addProcess());
-        gbc.gridy = 6;
-        inputPanel.add(addButton, gbc);
-
-        gbc.gridy = 7;
-        inputPanel.add(new JLabel("Scheduler Type:"), gbc);
-
-        gbc.gridy = 8;
-        inputPanel.add(schedulerTypeComboBox, gbc);
-
-        JButton runButton = new JButton("Run Scheduler");
-        runButton.addActionListener(e -> runScheduler());
-        gbc.gridy = 9;
-        inputPanel.add(runButton, gbc);
-
-        JButton clearButton = new JButton("Clear All");
-        clearButton.addActionListener(e -> clearAll());
-        gbc.gridy = 10;
-        inputPanel.add(clearButton, gbc);
-
-        return inputPanel;
-    }
-
-    private void addToPanel(JPanel panel, JLabel label, JTextField field, GridBagConstraints gbc, int row) {
-        gbc.gridx = 0;
-        gbc.gridy = row;
-        gbc.gridwidth = 1;
-        panel.add(label, gbc);
-
-        gbc.gridx = 1;
-        panel.add(field, gbc);
-    }
-
-    private void chooseColor() {
-        Color newColor = JColorChooser.showDialog(this, "Choose Process Color", currentColor);
-        if (newColor != null) {
-            currentColor = newColor;
-            colorButton.setBackground(currentColor);
-        }
+    private void returnToMainWindow() {
+        new CPUSchedulerMainWindow().setVisible(true);
+        this.dispose();
     }
 
     private void addProcess() {
@@ -315,18 +358,19 @@ public class CPUSchedulerGUI extends JFrame {
         }
 
         SwingUtilities.invokeLater(() -> {
-            new CPUSchedulerGUI().setVisible(true);
+            new CPUSchedulerMainWindow().setVisible(true);
         });
     }
 }
 
 class GanttChartPanel extends JPanel {
     private List<CPUProcess> processSequence;
-    private int timeUnit = 40;  // pixels per time unit
-    private int rowHeight = 40;
-    private int xOffset = 100;  // space for labels
-    private int yOffset = 60;   // increased space for top time markers
+    private int timeUnit;
+    private int rowHeight;
+    private int xOffset;
+    private int yOffset;
     private int maxTime = 0;
+    private int contextSwitchingTime;
 
     private List<TimeSlot> timeSlots;
     private Map<String, Integer> processRows;
@@ -342,7 +386,20 @@ class GanttChartPanel extends JPanel {
             this.burstTime = burstTime;
         }
     }
-
+    public GanttChartPanel(int timeUnit, int rowHeight, int xOffset, int yOffset) {
+        this(timeUnit, rowHeight, xOffset, yOffset, 0); // Default context switching time to 0
+    }
+    public GanttChartPanel(int timeUnit, int rowHeight, int xOffset, int yOffset, int contextSwitchingTime) {
+        this.timeUnit = timeUnit;
+        this.rowHeight = rowHeight;
+        this.xOffset = xOffset;
+        this.yOffset = yOffset;
+        this.contextSwitchingTime = contextSwitchingTime;
+        this.processSequence = new ArrayList<>();
+        this.timeSlots = new ArrayList<>();
+        this.processRows = new HashMap<>();
+        setBackground(Color.WHITE);
+    }
     public GanttChartPanel() {
         this.processSequence = new ArrayList<>();
         this.timeSlots = new ArrayList<>();
@@ -357,37 +414,29 @@ class GanttChartPanel extends JPanel {
 
         if (!processes.isEmpty()) {
             int currentTime = 0;
-            CPUProcess lastProcess = null;
-            int lastStartTime = 0;
-            int remainingBurst = 0;
+            List<TimeSlot> actualTimeSlots = new ArrayList<>();
 
-            // Calculate time slots
-            for (int i = 0; i < processes.size(); i++) {
-                CPUProcess currentProcess = processes.get(i);
+            for (CPUProcess process : processes) {
+                // Consider context switching time
+                int startTime = currentTime;
 
-                if (lastProcess != null && !lastProcess.equals(currentProcess)) {
-                    // Add time slot for the previous process
-                    timeSlots.add(new TimeSlot(lastProcess, lastStartTime, remainingBurst));
-                    currentTime += remainingBurst;
-                    lastStartTime = currentTime;
-                    remainingBurst = currentProcess.getBurstTime();
-                } else if (lastProcess == null) {
-                    lastStartTime = currentTime;
-                    remainingBurst = currentProcess.getBurstTime();
+                // Add context switching time before process starts
+                if (!actualTimeSlots.isEmpty()) {
+                    startTime += contextSwitchingTime;  // Assuming you pass context switching time
                 }
 
-                lastProcess = currentProcess;
+                // Process execution time
+                TimeSlot slot = new TimeSlot(process, startTime, process.getBurstTime());
+                actualTimeSlots.add(slot);
+
+                // Update current time
+                currentTime = startTime + process.getBurstTime();
             }
 
-            // Add the final time slot
-            if (lastProcess != null) {
-                timeSlots.add(new TimeSlot(lastProcess, lastStartTime, remainingBurst));
-                currentTime += remainingBurst;
-            }
-
+            this.timeSlots = actualTimeSlots;
             maxTime = currentTime;
 
-            // Assign rows to processes
+            // Process row assignment (same as before)
             Set<String> processNames = new LinkedHashSet<>();
             for (CPUProcess process : processSequence) {
                 processNames.add(process.getName());
@@ -480,5 +529,6 @@ class GanttChartPanel extends JPanel {
             int y = yOffset + (i * rowHeight);
             g2d.drawLine(xOffset, y, xOffset + (maxTime + 1) * timeUnit, y);
         }
+
     }
 }
