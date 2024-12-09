@@ -76,7 +76,7 @@ public class FCAIScheduling implements SchedulingStrategy {
                 }
                 if (currentProcess.getRemainingTime() <= 0) {
                     currentProcess.setTurnAroundTime(currentTime - currentProcess.getArrivalTime());
-                    currentProcess.setWaitingTime(currentProcess.getTurnAroundTime() - currentProcess.getBurstTime() - currentProcess.getArrivalTime());
+                    currentProcess.setWaitingTime(currentProcess.getTurnAroundTime() - currentProcess.getBurstTime());
                     output.add(("Time " +currentTime + ": Process "+currentProcess.getName()+
                             " executed for 1 unit\nRemaining Burst Time: "+currentProcess.getRemainingTime()+
                             ", Remaining Quantum: "+currentProcess.getQuantum()+", FCAI Factor: "+currentProcess.getFCAIFactor() +"\n"));
@@ -98,7 +98,7 @@ public class FCAIScheduling implements SchedulingStrategy {
                     //print completed
                     if (currentProcess.getRemainingTime() <= 0) {
                         currentProcess.setTurnAroundTime(currentTime - currentProcess.getArrivalTime());
-                        currentProcess.setWaitingTime(currentProcess.getTurnAroundTime() - currentProcess.getBurstTime() - currentProcess.getArrivalTime());
+                        currentProcess.setWaitingTime(currentProcess.getTurnAroundTime() - currentProcess.getBurstTime());
                         output.add(("Time " +currentTime + ": Process "+currentProcess.getName()+
                                 " executed for 1 unit\nRemaining Burst Time: "+currentProcess.getRemainingTime()+
                                 ", Remaining Quantum: "+currentProcess.getQuantum()+", FCAI Factor: "+currentProcess.getFCAIFactor() +"\n"));
@@ -144,7 +144,7 @@ public class FCAIScheduling implements SchedulingStrategy {
                     //print completed
                     if (currentProcess.getRemainingTime() <= 0) {
                         currentProcess.setTurnAroundTime(currentTime - currentProcess.getArrivalTime());
-                        currentProcess.setWaitingTime(currentProcess.getTurnAroundTime() - currentProcess.getBurstTime() - currentProcess.getArrivalTime());
+                        currentProcess.setWaitingTime(currentProcess.getTurnAroundTime() - currentProcess.getBurstTime());
                         output.add(("Time " +currentTime + ": Process "+currentProcess.getName()+
                                 " executed for 1 unit\nRemaining Burst Time: "+currentProcess.getRemainingTime()+
                                 ", Remaining Quantum: "+currentProcess.getQuantum()+", FCAI Factor: "+currentProcess.getFCAIFactor() +"\n"));
