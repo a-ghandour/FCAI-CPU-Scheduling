@@ -207,7 +207,7 @@ public class CPUSchedulerMainWindow extends JFrame {
         processTable.getColumnModel().getColumn(4).setCellRenderer(new ColorCellRenderer());
 
         // Gantt Chart with reduced time unit and height
-        ganttChart = new GanttChartPanel(20, 25, 60, 30);
+        ganttChart = new GanttChartPanel(20, 25, 60, 30, contextSwitchingTime);
 
         // Output Area
         outputArea = new JTextArea();
@@ -440,12 +440,17 @@ class GanttChartPanel extends JPanel {
     private static class TimeSlot {
         final CPUProcess process;
         final int startTime;
-        final int burstTime;
+        final int duration;
+        final boolean isContextSwitch;
+        final Color color;
 
-        TimeSlot(CPUProcess process, int startTime, int burstTime) {
+        TimeSlot(CPUProcess process, int startTime, int duration, boolean isContextSwitch) {
             this.process = process;
             this.startTime = startTime;
-            this.burstTime = burstTime;
+            this.duration = duration;
+            this.isContextSwitch = isContextSwitch;
+            // Use a lighter gray for context switching
+            this.color = isContextSwitch ? new Color(200, 200, 200, 150) : process.getColor();
         }
     }
     public GanttChartPanel(int timeUnit, int rowHeight, int xOffset, int yOffset) {
@@ -478,27 +483,38 @@ class GanttChartPanel extends JPanel {
             int currentTime = 0;
             List<TimeSlot> actualTimeSlots = new ArrayList<>();
 
-            for (CPUProcess process : processes) {
-                // Consider context switching time
-                int startTime = currentTime;
+            for (int i = 0; i < processes.size(); i++) {
+                CPUProcess process = processes.get(i);
 
-                // Add context switching time before process starts
-                if (!actualTimeSlots.isEmpty()) {
-                    startTime += contextSwitchingTime;  // Assuming you pass context switching time
+                // Add context switching time before process starts (except for the first process)
+                if (i > 0) {
+                    TimeSlot contextSwitchSlot = new TimeSlot(
+                            null,
+                            currentTime,
+                            contextSwitchingTime,
+                            true
+                    );
+                    actualTimeSlots.add(contextSwitchSlot);
+                    currentTime += contextSwitchingTime;
                 }
 
                 // Process execution time
-                TimeSlot slot = new TimeSlot(process, startTime, process.getBurstTime());
-                actualTimeSlots.add(slot);
+                TimeSlot processSlot = new TimeSlot(
+                        process,
+                        currentTime,
+                        process.getBurstTime(),
+                        false
+                );
+                actualTimeSlots.add(processSlot);
 
                 // Update current time
-                currentTime = startTime + process.getBurstTime();
+                currentTime += process.getBurstTime();
             }
 
             this.timeSlots = actualTimeSlots;
             maxTime = currentTime;
 
-            // Process row assignment (same as before)
+            // Process row assignment
             Set<String> processNames = new LinkedHashSet<>();
             for (CPUProcess process : processSequence) {
                 processNames.add(process.getName());
@@ -535,31 +551,53 @@ class GanttChartPanel extends JPanel {
 
         // Draw time slots
         for (TimeSlot slot : timeSlots) {
-            int row = processRows.get(slot.process.getName());
-            int x = xOffset + (slot.startTime * timeUnit);
-            int y = yOffset + row * rowHeight;
-            int width = slot.burstTime * timeUnit;
+            // Skip null process slots (happens in context switching)
+            if (slot.process == null && slot.isContextSwitch) {
+                int row = 0; // Context switch spans all rows
+                int x = xOffset + (slot.startTime * timeUnit);
+                int y = yOffset;
+                int width = slot.duration * timeUnit;
 
-            // Draw the bar
-            g2d.setColor(slot.process.getColor());
-            g2d.fillRect(x, y, width, rowHeight - 10);
+                // Draw the context switch bar across all rows
+                g2d.setColor(slot.color);
+                g2d.fillRect(x, y, width, processRows.size() * rowHeight);
 
-            // Draw border
-            g2d.setColor(Color.BLACK);
-            g2d.drawRect(x, y, width, rowHeight - 10);
+                // Draw border
+                g2d.setColor(Color.DARK_GRAY);
+                g2d.drawRect(x, y, width, processRows.size() * rowHeight);
 
-            // Draw burst time in the middle of the bar if there's enough space
-            if (width > 30) {
-                String burstText = String.valueOf(slot.burstTime);
-                FontMetrics fm = g2d.getFontMetrics();
-                int textWidth = fm.stringWidth(burstText);
-                int textX = x + (width - textWidth) / 2;
-                int textY = y + (rowHeight - 10) / 2 + fm.getAscent() / 2;
+                continue;
+            }
+
+            // Regular process slots
+            if (slot.process != null) {
+                int row = processRows.get(slot.process.getName());
+                int x = xOffset + (slot.startTime * timeUnit);
+                int y = yOffset + row * rowHeight;
+                int width = slot.duration * timeUnit;
+
+                // Draw the bar
+                g2d.setColor(slot.color);
+                g2d.fillRect(x, y, width, rowHeight - 10);
+
+                // Draw border
                 g2d.setColor(Color.BLACK);
-                g2d.drawString(burstText, textX, textY);
+                g2d.drawRect(x, y, width, rowHeight - 10);
+
+                // Draw burst time in the middle of the bar if there's enough space
+                if (width > 30) {
+                    String burstText = String.valueOf(slot.duration);
+                    FontMetrics fm = g2d.getFontMetrics();
+                    int textWidth = fm.stringWidth(burstText);
+                    int textX = x + (width - textWidth) / 2;
+                    int textY = y + (rowHeight - 10) / 2 + fm.getAscent() / 2;
+                    g2d.setColor(Color.BLACK);
+                    g2d.drawString(burstText, textX, textY);
+                }
             }
         }
     }
+
 
     private void drawTimeUnits(Graphics2D g2d) {
         g2d.setColor(Color.BLACK);
