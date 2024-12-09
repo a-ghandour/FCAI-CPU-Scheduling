@@ -130,7 +130,7 @@ public class FCAIScheduling implements SchedulingStrategy {
                     if (preemptive != null) {
                         currentProcess.setQuantum(currentProcess.getQuantum() + (int)unusedQuantum);
                         readyQueue.addLast(currentProcess);
-                        currentProcess.setFCAIFactor(SchedulingUtils.calculateFCAIFactor(currentProcess,v1, v2));
+                        currentProcess.setFCAIFactor(Math.ceil(SchedulingUtils.calculateFCAIFactor(currentProcess, v1, v2)));
 
                         CPUProcess process = readyQueue.stream()
                                 .min(Comparator.comparingDouble(CPUProcess::getFCAIFactor))
