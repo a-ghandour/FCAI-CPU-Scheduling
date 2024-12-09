@@ -365,9 +365,9 @@ public class CPUSchedulerMainWindow extends JFrame {
             }
 
             outputArea.append(String.format("\nAverage Waiting Time: %.2f\n",
-                    totalWaitingTime / processes.size()));
+                    Math.ceil(totalWaitingTime / processes.size())));
             outputArea.append(String.format("Average Turnaround Time: %.2f\n",
-                    totalTurnaroundTime / processes.size()));
+                    Math.ceil(totalTurnaroundTime / processes.size())));
 
             ganttChart.setProcesses(scheduledProcesses);
 
