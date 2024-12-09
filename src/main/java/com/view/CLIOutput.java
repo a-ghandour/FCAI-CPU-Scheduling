@@ -79,8 +79,8 @@ public class CLIOutput {
             totalTurnaroundTime += process.getTurnAroundTime();
         }
 
-        System.out.printf("\nAverage Waiting Time: %.2f\n", totalWaitingTime / totalProcesses);
-        System.out.printf("Average Turnaround Time: %.2f\n", totalTurnaroundTime / totalProcesses);
+        System.out.printf("\nAverage Waiting Time: %.2f\n", Math.ceil(totalWaitingTime / totalProcesses));
+        System.out.printf("Average Turnaround Time: %.2f\n", Math.ceil(totalTurnaroundTime / totalProcesses));
     }
 
     public static void printMessages(List<String> messages) {
