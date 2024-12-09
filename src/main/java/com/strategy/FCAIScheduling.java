@@ -79,7 +79,7 @@ public class FCAIScheduling implements SchedulingStrategy {
                     currentProcess.setWaitingTime(currentProcess.getTurnAroundTime() - currentProcess.getBurstTime());
                     output.add(("Time " +currentTime + ": Process "+currentProcess.getName()+
                             " executed for 1 unit\nRemaining Burst Time: "+currentProcess.getRemainingTime()+
-                            ", Remaining Quantum: "+currentProcess.getQuantum()+", FCAI Factor: "+currentProcess.getFCAIFactor() +"\n"));
+                            ", Remaining Quantum: "+currentProcess.getQuantum()+", FCAI Factor: Completed" +"\n"));
                     output.add(("Time "+currentTime+": Process "+currentProcess.getName()+" completed.\n\n"));
                     scheduledProcesses.add(currentProcess);
                     continue;
@@ -101,7 +101,7 @@ public class FCAIScheduling implements SchedulingStrategy {
                         currentProcess.setWaitingTime(currentProcess.getTurnAroundTime() - currentProcess.getBurstTime());
                         output.add(("Time " +currentTime + ": Process "+currentProcess.getName()+
                                 " executed for 1 unit\nRemaining Burst Time: "+currentProcess.getRemainingTime()+
-                                ", Remaining Quantum: "+currentProcess.getQuantum()+", FCAI Factor: "+currentProcess.getFCAIFactor() +"\n"));
+                                ", Remaining Quantum: "+currentProcess.getQuantum()+", FCAI Factor: Completed " +"\n"));
                         output.add(("Time "+currentTime+": Process "+currentProcess.getName()+" completed.\n\n"));
                         scheduledProcesses.add(currentProcess);
                         break;
@@ -147,7 +147,7 @@ public class FCAIScheduling implements SchedulingStrategy {
                         currentProcess.setWaitingTime(currentProcess.getTurnAroundTime() - currentProcess.getBurstTime());
                         output.add(("Time " +currentTime + ": Process "+currentProcess.getName()+
                                 " executed for 1 unit\nRemaining Burst Time: "+currentProcess.getRemainingTime()+
-                                ", Remaining Quantum: "+currentProcess.getQuantum()+", FCAI Factor: "+currentProcess.getFCAIFactor() +"\n"));
+                                ", Remaining Quantum: "+currentProcess.getQuantum()+", FCAI Factor: Completed" +"\n"));
                         output.add(("Time "+currentTime+": Process "+currentProcess.getName()+" completed.\n\n"));
                         scheduledProcesses.add(currentProcess);
                         break;
