@@ -39,7 +39,7 @@ public class FCAIScheduling implements SchedulingStrategy {
                 execTime = Math.min(execTime, currentProcess.getRemainingTime());
                 currentTime += execTime;
                 currentProcess.setRemainingTime(currentProcess.getRemainingTime() - (int)execTime);
-                currentProcess.setFCAIFactor(SchedulingUtils.calculateFCAIFactor(currentProcess, v1, v2));
+                currentProcess.setFCAIFactor(Math.ceil(SchedulingUtils.calculateFCAIFactor(currentProcess, v1, v2)));
 
                 iterator = processes.iterator();
                 while (iterator.hasNext()) {
@@ -60,7 +60,7 @@ public class FCAIScheduling implements SchedulingStrategy {
                 if (preemptive != null) {
                     currentProcess.setQuantum(currentProcess.getQuantum() + (int)unusedQuantum);
                     readyQueue.addLast(currentProcess);
-                    currentProcess.setFCAIFactor(SchedulingUtils.calculateFCAIFactor(currentProcess,v1, v2));
+                    currentProcess.setFCAIFactor(Math.ceil(SchedulingUtils.calculateFCAIFactor(currentProcess, v1, v2)));
 
                     CPUProcess process = readyQueue.stream()
                             .min(Comparator.comparingDouble(CPUProcess::getFCAIFactor))
@@ -93,7 +93,7 @@ public class FCAIScheduling implements SchedulingStrategy {
                     currentTime++;
 
                     // Update FCAI factor for the current process
-                    currentProcess.setFCAIFactor(SchedulingUtils.calculateFCAIFactor(currentProcess,v1, v2));
+                    currentProcess.setFCAIFactor(Math.ceil(SchedulingUtils.calculateFCAIFactor(currentProcess, v1, v2)));
 
                     //print completed
                     if (currentProcess.getRemainingTime() <= 0) {

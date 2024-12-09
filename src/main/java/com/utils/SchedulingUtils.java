@@ -7,15 +7,15 @@ import java.util.List;
 public class SchedulingUtils {
     public static double calculateV1(List<CPUProcess> processes) {
         double lastArrivalTime = processes.stream().mapToDouble(CPUProcess::getArrivalTime).max().orElse(1);
-        return Math.ceil(lastArrivalTime / 10);
+        return (lastArrivalTime / 10);
     }
 
     public static double calculateV2(List<CPUProcess> processes) {
         double maxBurstTime = processes.stream().mapToDouble(CPUProcess::getBurstTime).max().orElse(1);
-        return Math.ceil(maxBurstTime / 10);
+        return (maxBurstTime / 10);
     }
 
     public static double calculateFCAIFactor(CPUProcess process, double v1, double v2) {
-        return Math.ceil((10 - process.getPriority()) + Math.ceil(process.getArrivalTime() / v1) + Math.ceil(process.getRemainingTime() / v2));
+        return ((10 - process.getPriority()) + (process.getArrivalTime() / v1) + (process.getRemainingTime() / v2));
     }
 }
