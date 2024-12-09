@@ -5,6 +5,9 @@ import java.awt.*;
 
 public class MainWindow extends JFrame {
     private JTextField contextSwitchingTimeField;
+    private JComboBox<String> schedulingTypeComboBox;
+    private JTextField numberOfProcessesField;
+    private JTextField roundRobinQuantumField;
 
     public MainWindow() {
         initializeComponents();
@@ -13,18 +16,39 @@ public class MainWindow extends JFrame {
     }
 
     private void initializeComponents() {
-        // Title label with larger, bold font
-        JLabel titleLabel = new JLabel("CPU Scheduler Simulator", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        // Scheduling Type Dropdown
+        schedulingTypeComboBox = new JComboBox<>(new String[]{
+                "SJF", "SRTF", "Priority", "FCAI"
+        });
+        schedulingTypeComboBox.addActionListener(e -> {
+            String selectedType = (String) schedulingTypeComboBox.getSelectedItem();
+            boolean isSJForSRTF = selectedType.equals("SJF") || selectedType.equals("SRTF")|| selectedType.equals("Priority");
+            contextSwitchingTimeField.setEnabled(isSJForSRTF);
+            if (!isSJForSRTF) {
+                contextSwitchingTimeField.setText("0");
+            }
+        });
 
-        // Author label with italicized font
-        JLabel authorLabel = new JLabel("Done by Mohamed Taha", SwingConstants.CENTER);
-        authorLabel.setFont(new Font("Arial", Font.ITALIC, 16));
+        schedulingTypeComboBox.setToolTipText("Select Scheduling Algorithm");
 
-        // Context switching time label
-        JLabel contextSwitchLabel = new JLabel("Enter Context Switching Time (ms):");
+        // Context Switching Time Field
         contextSwitchingTimeField = new JTextField(10);
         contextSwitchingTimeField.setToolTipText("Context Switching Time in milliseconds");
+
+        // Number of Processes Field
+        numberOfProcessesField = new JTextField(10);
+        numberOfProcessesField.setToolTipText("Total number of processes");
+
+        // Round Robin Time Quantum Field (initially disabled)
+        roundRobinQuantumField = new JTextField(10);
+        roundRobinQuantumField.setToolTipText("Time quantum for Round Robin");
+        roundRobinQuantumField.setEnabled(false);
+
+        // Enable/Disable Round Robin Quantum based on selection
+        schedulingTypeComboBox.addActionListener(e -> {
+            boolean isRoundRobin = schedulingTypeComboBox.getSelectedItem().equals("FCAI");
+            roundRobinQuantumField.setEnabled(isRoundRobin);
+        });
     }
 
     private void createLayout() {
@@ -43,12 +67,32 @@ public class MainWindow extends JFrame {
         gbc.gridy = 1;
         add(new JLabel("Done by Mohamed Taha", SwingConstants.CENTER), gbc);
 
-        // Context Switching Time Label
+        // Scheduling Type Label and Dropdown
         gbc.gridy = 2;
         gbc.gridwidth = 1;
-        add(new JLabel("Context Switching Time (s):"), gbc);
+        gbc.gridx = 0;
+        add(new JLabel("Scheduling Type:"), gbc);
+        gbc.gridx = 1;
+        add(schedulingTypeComboBox, gbc);
 
-        // Context Switching Time Field
+        // Number of Processes Label and Field
+        gbc.gridy = 3;
+        gbc.gridx = 0;
+        add(new JLabel("Number of Processes:"), gbc);
+        gbc.gridx = 1;
+        add(numberOfProcessesField, gbc);
+
+        // Round Robin Time Quantum Label and Field
+        gbc.gridy = 4;
+        gbc.gridx = 0;
+        add(new JLabel("Round Robin Quantum:"), gbc);
+        gbc.gridx = 1;
+        add(roundRobinQuantumField, gbc);
+
+        // Context Switching Time Label and Field
+        gbc.gridy = 5;
+        gbc.gridx = 0;
+        add(new JLabel("Context Switching Time (ms):"), gbc);
         gbc.gridx = 1;
         add(contextSwitchingTimeField, gbc);
 
@@ -56,36 +100,56 @@ public class MainWindow extends JFrame {
         JButton proceedButton = new JButton("Proceed to Scheduler");
         proceedButton.addActionListener(e -> openSchedulerWindow());
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 6;
         gbc.gridwidth = 2;
         add(proceedButton, gbc);
     }
 
     private void setupWindowProperties() {
         setTitle("CPU Scheduler Simulator");
-        setSize(400, 300);
+        setSize(400, 400);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
     }
 
     private void openSchedulerWindow() {
         try {
+            // Validate inputs
+            String schedulingType = (String) schedulingTypeComboBox.getSelectedItem();
+            int numberOfProcesses = Integer.parseInt(numberOfProcessesField.getText());
             int contextSwitchingTime = Integer.parseInt(contextSwitchingTimeField.getText());
-            if (contextSwitchingTime < 0) {
-                JOptionPane.showMessageDialog(this,
-                        "Context Switching Time must be non-negative",
-                        "Invalid Input",
-                        JOptionPane.ERROR_MESSAGE);
-                return;
+
+            // Validate Round Robin Quantum if Round Robin is selected
+            int roundRobinQuantum = 0;
+            if (schedulingType.equals("Round Robin")) {
+                roundRobinQuantum = Integer.parseInt(roundRobinQuantumField.getText());
+                if (roundRobinQuantum <= 0) {
+                    throw new IllegalArgumentException("Round Robin Quantum must be positive");
+                }
             }
 
-            // Open scheduler window with context switching time
-            CPUSchedulerMainWindow schedulerWindow = new CPUSchedulerMainWindow(contextSwitchingTime);
+            // Input validation
+            if (numberOfProcesses <= 0 || contextSwitchingTime < 0) {
+                throw new IllegalArgumentException("Invalid number of processes or context switching time");
+            }
+
+            // Open scheduler window with parameters
+            CPUSchedulerMainWindow schedulerWindow = new CPUSchedulerMainWindow(
+                    schedulingType,
+                    numberOfProcesses,
+                    roundRobinQuantum,
+                    contextSwitchingTime
+            );
             schedulerWindow.setVisible(true);
             this.dispose(); // Close main window
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(this,
-                    "Please enter a valid number for Context Switching Time",
+                    "Please enter valid numeric values",
+                    "Invalid Input",
+                    JOptionPane.ERROR_MESSAGE);
+        } catch (IllegalArgumentException e) {
+            JOptionPane.showMessageDialog(this,
+                    e.getMessage(),
                     "Invalid Input",
                     JOptionPane.ERROR_MESSAGE);
         }

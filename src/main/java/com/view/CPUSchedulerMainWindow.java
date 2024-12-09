@@ -33,22 +33,30 @@ public class CPUSchedulerMainWindow extends JFrame {
     private JButton colorButton;
     private GanttChartPanel ganttChart;
     private boolean schedulerHasRun = false;
+    private int maxProcesses;
+    private String schedulingType;
 
     // Constructor with context switching time
-    public CPUSchedulerMainWindow(int contextSwitchingTime) {
+    public CPUSchedulerMainWindow(
+            String schedulingType,
+            int numberOfProcesses,
+            int roundRobinQuantum,
+            int contextSwitchingTime
+    ) {
         this.contextSwitchingTime = contextSwitchingTime;
-        initializeComponents();
+        this.maxProcesses = numberOfProcesses;
+        this.schedulingType = schedulingType;
+
+        initializeComponents(schedulingType, contextSwitchingTime);
         createLayout();
-        setTitle("CPU Scheduler Simulator - Process Configuration");
+
+        setTitle("CPU Scheduler Simulator - " + schedulingType);
         setSize(1200, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        contextSwitchingTimeField.setText(String.valueOf(contextSwitchingTime));
     }
-
     // Default constructor
     public CPUSchedulerMainWindow() {
-        this(0);
     }
 
     // Implement missing method for input panel
@@ -137,13 +145,20 @@ public class CPUSchedulerMainWindow extends JFrame {
     }
 
 
-    private void initializeComponents() {
+    private void initializeComponents(String schedulingType, int contextSwitchingTime) {
+
         // Input Fields
         nameField = new JTextField(10);
         nameField.setToolTipText("Process Name");
 
-        priorityField = new JTextField(10);
-        priorityField.setToolTipText("Priority");
+        if (schedulingType.equals("SJF") || schedulingType.equals("SRTF")) {
+            priorityField = new JTextField("0", 10);
+            priorityField.setEditable(false);
+            priorityField.setToolTipText("Priority is fixed at 0 for " + schedulingType);
+        } else {
+            priorityField = new JTextField(10);
+            priorityField.setToolTipText("Priority");
+        }
 
         arrivalTimeField = new JTextField(10);
         arrivalTimeField.setToolTipText("Arrival Time");
@@ -153,6 +168,10 @@ public class CPUSchedulerMainWindow extends JFrame {
 
         contextSwitchingTimeField = new JTextField(10);
         contextSwitchingTimeField.setToolTipText("Context Switching Time");
+        contextSwitchingTimeField = new JTextField(10);
+        contextSwitchingTimeField.setText(String.valueOf(contextSwitchingTime));
+        contextSwitchingTimeField.setEditable(false);
+
 
         // Color Button
         colorButton = new JButton("Choose Color");
@@ -160,10 +179,11 @@ public class CPUSchedulerMainWindow extends JFrame {
         colorButton.addActionListener(e -> chooseColor());
 
         // Scheduler Type Dropdown
-        schedulerTypeComboBox = new JComboBox<>(new String[]{"Priority", "SRTF", "FCFS"});
-
+        schedulerTypeComboBox = new JComboBox<>(new String[]{"SJF", "SRTF", "Priority", "FCAI"});
+        schedulerTypeComboBox = new JComboBox<>(new String[]{schedulingType});
+        schedulerTypeComboBox.setEnabled(false);
         // Process Table
-        String[] columnNames = {"Name", "Priority", "Arrival Time", "Burst Time", "Context Switching Time", "Color"};
+        String[] columnNames = {"Name", "Priority", "Arrival Time", "Burst Time", "Color"};
         tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -171,7 +191,7 @@ public class CPUSchedulerMainWindow extends JFrame {
             }
         };
         processTable = new JTable(tableModel);
-        processTable.getColumnModel().getColumn(5).setCellRenderer(new ColorCellRenderer());
+        processTable.getColumnModel().getColumn(4).setCellRenderer(new ColorCellRenderer());
 
         // Gantt Chart with reduced time unit and height
         ganttChart = new GanttChartPanel(20, 25, 60, 30);
@@ -180,6 +200,7 @@ public class CPUSchedulerMainWindow extends JFrame {
         outputArea = new JTextArea();
         outputArea.setEditable(false);
         outputArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+
     }
 
     private void createLayout() {
@@ -215,12 +236,18 @@ public class CPUSchedulerMainWindow extends JFrame {
 
     private void addProcess() {
         try {
+            if (processes.size() >= maxProcesses) {
+                showError("Maximum number of processes (" + maxProcesses + ") has been reached");
+                return;
+            }
             // Validate inputs
             String name = nameField.getText().trim();
+
             if (name.isEmpty()) {
                 showError("Process Name cannot be empty");
                 return;
             }
+
             int contextSwtichingTime = Integer.parseInt(contextSwitchingTimeField.getText());
             int priority = Integer.parseInt(priorityField.getText());
             int arrivalTime = Integer.parseInt(arrivalTimeField.getText());
@@ -242,9 +269,25 @@ public class CPUSchedulerMainWindow extends JFrame {
                     priority,
                     arrivalTime,
                     burstTime,
-                    contextSwtichingTime,
                     currentColor
             };
+            if (arrivalTime < 0) {
+                showError("Arrival Time cannot be negative");
+                return;
+            }
+            if (burstTime <= 0) {
+                showError("Burst Time must be positive");
+                return;
+            }
+            if (priority < 0) {
+                showError("Priority cannot be negative");
+                return;
+            }
+            if (contextSwtichingTime < 0) {
+                showError("Context Switching Time cannot be negative");
+                return;
+            }
+
             tableModel.addRow(rowData);
 
             // Clear input fields
@@ -262,6 +305,7 @@ public class CPUSchedulerMainWindow extends JFrame {
             showError("Please enter valid numeric values");
         }
     }
+
 
     private void runScheduler() {
         if (processes.isEmpty()) {
