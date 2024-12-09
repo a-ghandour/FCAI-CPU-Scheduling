@@ -351,7 +351,7 @@ public class CPUSchedulerMainWindow extends JFrame {
             double totalWaitingTime = 0;
             double totalTurnaroundTime = 0;
 
-            for (CPUProcess process : scheduledProcesses) {
+            for (CPUProcess process : processes) {
                 outputArea.append(String.format("Process %s:\n", process.getName()));
                 outputArea.append(String.format("  Waiting Time: %d\n", process.getWaitingTime()));
                 outputArea.append(String.format("  Turnaround Time: %d\n\n", process.getTurnAroundTime()));
