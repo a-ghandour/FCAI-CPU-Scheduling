@@ -1,6 +1,8 @@
 package main.java.com.view;
 
 import main.java.com.view.MainWindow;
+import main.java.com.strategy.*;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -268,6 +270,10 @@ public class CPUSchedulerMainWindow extends JFrame {
             else {
                  priority = Integer.parseInt(priorityField.getText());
             }
+            int quantum = 0; // Default quantum
+            if (schedulingType.equalsIgnoreCase("FCAI")) {
+                quantum = Integer.parseInt(roundRobinQuantumField.getText());
+            }
             int arrivalTime = Integer.parseInt(arrivalTimeField.getText());
             int burstTime = Integer.parseInt(burstTimeField.getText());
 
@@ -277,7 +283,7 @@ public class CPUSchedulerMainWindow extends JFrame {
             }
 
             // Create process
-            CPUProcess process = new CPUProcess(name, arrivalTime, burstTime, priority);
+            CPUProcess process = new CPUProcess(name, arrivalTime, burstTime, priority, quantum);
             process.setColor(currentColor);
             processes.add(process);
 
@@ -331,19 +337,9 @@ public class CPUSchedulerMainWindow extends JFrame {
             return;
         }
 
-        String schedulerType = schedulerTypeComboBox.getSelectedItem().toString();
-        if (schedulerType.equals("SRTF") && schedulerHasRun) {
-            showError("SRTF scheduler can only be run once");
-            return;
-        }
-
         try {
-            if (schedulerType.equals("SRTF")) {
-                schedulerHasRun = true;
-            }
-            int contextSwtichingTime = Integer.parseInt(contextSwitchingTimeField.getText());
-            SchedulingStrategy scheduler = SchedulerFactory.getScheduler(schedulerType.toLowerCase());
-            List<CPUProcess> scheduledProcesses = scheduler.schedule(new ArrayList<>(processes),contextSwtichingTime);
+            SchedulingStrategy scheduler = SchedulerFactory.getScheduler(schedulingType.toLowerCase());
+            List<CPUProcess> scheduledProcesses = scheduler.schedule(new ArrayList<>(processes), contextSwitchingTime);
 
             outputArea.setText("");
             outputArea.append("Execution Order:\n");
@@ -355,7 +351,7 @@ public class CPUSchedulerMainWindow extends JFrame {
             double totalWaitingTime = 0;
             double totalTurnaroundTime = 0;
 
-            for (CPUProcess process : processes) {
+            for (CPUProcess process : scheduledProcesses) {
                 outputArea.append(String.format("Process %s:\n", process.getName()));
                 outputArea.append(String.format("  Waiting Time: %d\n", process.getWaitingTime()));
                 outputArea.append(String.format("  Turnaround Time: %d\n\n", process.getTurnAroundTime()));
@@ -364,10 +360,25 @@ public class CPUSchedulerMainWindow extends JFrame {
                 totalTurnaroundTime += process.getTurnAroundTime();
             }
 
-            outputArea.append(String.format("\nAverage Waiting Time: %.2f\n",
-                    Math.ceil(totalWaitingTime / processes.size())));
-            outputArea.append(String.format("Average Turnaround Time: %.2f\n",
-                    Math.ceil(totalTurnaroundTime / processes.size())));
+            outputArea.append(String.format("\nAverage Waiting Time: %.2f\n", Math.ceil(totalWaitingTime / processes.size())));
+            outputArea.append(String.format("Average Turnaround Time: %.2f\n", Math.ceil(totalTurnaroundTime / processes.size())));
+
+            // FCAI Messages
+            if (scheduler instanceof FCAIScheduling) {
+                FCAIScheduling fcaiScheduler = (FCAIScheduling) scheduler;
+                List<String> messages = fcaiScheduler.getOutputMessages();
+                List<String> timeline = fcaiScheduler.getGanttTimeline(); // Fetch timeline
+                outputArea.append("\nFCAI Messages:\n");
+                for (String message : messages) {
+                    outputArea.append(message + "\n");
+                }
+
+                // Render Gantt timeline
+                outputArea.append("\nGantt Chart Timeline:\n");
+                for (String event : timeline) {
+                    outputArea.append(event + "\n");
+                }
+            }
 
             ganttChart.setProcesses(scheduledProcesses);
 
@@ -375,6 +386,7 @@ public class CPUSchedulerMainWindow extends JFrame {
             showError("Error running scheduler: " + e.getMessage());
         }
     }
+
 
     private void clearAll() {
         processes.clear();

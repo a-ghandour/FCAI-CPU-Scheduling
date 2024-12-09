@@ -6,10 +6,10 @@ import java.util.*;
 
 public class FCAIScheduling implements SchedulingStrategy {
     List<String> output = new ArrayList<>();
+    List<String> ganttTimeline = new ArrayList<>();
 
     @Override
     public List<CPUProcess> schedule(List<CPUProcess> processes, int contextSwitchTime) {
-        List<CPUProcess> executionOrder = new ArrayList<>();
         List<CPUProcess> scheduledProcesses = new ArrayList<>();
         Deque<CPUProcess> readyQueue = new LinkedList<>();
 
@@ -33,6 +33,8 @@ public class FCAIScheduling implements SchedulingStrategy {
 
             if (!readyQueue.isEmpty()) {
                 CPUProcess currentProcess = readyQueue.pollFirst();
+                ganttTimeline.add("Time " + currentTime + ": " + currentProcess.getName() + " starts execution.");
+
                 double quantum = currentProcess.getQuantum();
                 double execTime = Math.ceil(quantum * 0.4);
                 double unusedQuantum = quantum - execTime;
@@ -58,6 +60,7 @@ public class FCAIScheduling implements SchedulingStrategy {
                 }
 
                 if (preemptive != null) {
+                    ganttTimeline.add("Time " + currentTime + ": " + currentProcess.getName() + " starts execution.");
                     currentProcess.setQuantum(currentProcess.getQuantum() + (int)unusedQuantum);
                     readyQueue.addLast(currentProcess);
                     currentProcess.setFCAIFactor(Math.ceil(SchedulingUtils.calculateFCAIFactor(currentProcess, v1, v2)));
@@ -75,6 +78,7 @@ public class FCAIScheduling implements SchedulingStrategy {
                     continue;
                 }
                 if (currentProcess.getRemainingTime() <= 0) {
+                    ganttTimeline.add("Time " + currentTime + ": " + currentProcess.getName() + " starts execution.");
                     currentProcess.setTurnAroundTime(currentTime - currentProcess.getArrivalTime());
                     currentProcess.setWaitingTime(currentProcess.getTurnAroundTime() - currentProcess.getBurstTime());
                     output.add(("Time " +currentTime + ": Process "+currentProcess.getName()+
@@ -94,6 +98,7 @@ public class FCAIScheduling implements SchedulingStrategy {
 
                     // Update FCAI factor for the current process
                     currentProcess.setFCAIFactor(Math.ceil(SchedulingUtils.calculateFCAIFactor(currentProcess, v1, v2)));
+                    ganttTimeline.add("Time " + currentTime + ": " + currentProcess.getName() + " starts execution.");
 
                     //print completed
                     if (currentProcess.getRemainingTime() <= 0) {
@@ -128,6 +133,7 @@ public class FCAIScheduling implements SchedulingStrategy {
                     }
 
                     if (preemptive != null) {
+                        ganttTimeline.add("Time " + currentTime + ": " + currentProcess.getName() + " starts execution.");
                         currentProcess.setQuantum(currentProcess.getQuantum() + (int)unusedQuantum);
                         readyQueue.addLast(currentProcess);
                         currentProcess.setFCAIFactor(Math.ceil(SchedulingUtils.calculateFCAIFactor(currentProcess, v1, v2)));
@@ -143,6 +149,7 @@ public class FCAIScheduling implements SchedulingStrategy {
 
                     //print completed
                     if (currentProcess.getRemainingTime() <= 0) {
+                        ganttTimeline.add("Time " + currentTime + ": " + currentProcess.getName() + " starts execution.");
                         currentProcess.setTurnAroundTime(currentTime - currentProcess.getArrivalTime());
                         currentProcess.setWaitingTime(currentProcess.getTurnAroundTime() - currentProcess.getBurstTime());
                         output.add(("Time " +currentTime + ": Process "+currentProcess.getName()+
@@ -161,6 +168,7 @@ public class FCAIScheduling implements SchedulingStrategy {
             }
             else {
                 // If no process is ready, increment time
+                ganttTimeline.add("Time " + currentTime + ": Idle");
                 currentTime++;
             }
         }
@@ -169,5 +177,9 @@ public class FCAIScheduling implements SchedulingStrategy {
 
     public List<String> getOutputMessages() {
         return output;
+    }
+
+    public List<String> getGanttTimeline() {
+        return ganttTimeline;
     }
 }
