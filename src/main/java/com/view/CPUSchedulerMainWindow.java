@@ -35,17 +35,19 @@ public class CPUSchedulerMainWindow extends JFrame {
     private boolean schedulerHasRun = false;
     private int maxProcesses;
     private String schedulingType;
+    private JTextField roundRobinQuantumField;
+    private int roundRobinQuantum;
 
     // Constructor with context switching time
     public CPUSchedulerMainWindow(
             String schedulingType,
             int numberOfProcesses,
-            int roundRobinQuantum,
             int contextSwitchingTime
     ) {
         this.contextSwitchingTime = contextSwitchingTime;
         this.maxProcesses = numberOfProcesses;
         this.schedulingType = schedulingType;
+
 
         initializeComponents(schedulingType, contextSwitchingTime);
         createLayout();
@@ -93,43 +95,49 @@ public class CPUSchedulerMainWindow extends JFrame {
         panel.add(new JLabel("Burst Time:"), gbc);
         gbc.gridx = 1;
         panel.add(burstTimeField, gbc);
+        // Round Robin Quantum Field
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        panel.add(new JLabel("Round Robin Quantum:"), gbc);
+        gbc.gridx = 1;
+        panel.add(roundRobinQuantumField, gbc);
 
         // Context Switching Time
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy = 5;
         panel.add(new JLabel("Context Switching Time:"), gbc);
         gbc.gridx = 1;
         panel.add(contextSwitchingTimeField, gbc);
 
         // Scheduler Type
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 6;
         panel.add(new JLabel("Scheduler Type:"), gbc);
         gbc.gridx = 1;
         panel.add(schedulerTypeComboBox, gbc);
 
         // Color Button
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy = 7;
         gbc.gridwidth = 2;
         panel.add(colorButton, gbc);
 
         // Add Process Button
         JButton addProcessButton = new JButton("Add Process");
         addProcessButton.addActionListener(e -> addProcess());
-        gbc.gridy = 7;
+        gbc.gridy = 8;
         panel.add(addProcessButton, gbc);
 
         // Run Scheduler Button
         JButton runSchedulerButton = new JButton("Run Scheduler");
         runSchedulerButton.addActionListener(e -> runScheduler());
-        gbc.gridy = 8;
+        gbc.gridy = 9;
         panel.add(runSchedulerButton, gbc);
 
         // Clear All Button
         JButton clearAllButton = new JButton("Clear All");
         clearAllButton.addActionListener(e -> clearAll());
-        gbc.gridy = 9;
+        gbc.gridy = 10;
         panel.add(clearAllButton, gbc);
 
         return panel;
@@ -172,6 +180,11 @@ public class CPUSchedulerMainWindow extends JFrame {
         contextSwitchingTimeField.setText(String.valueOf(contextSwitchingTime));
         contextSwitchingTimeField.setEditable(false);
 
+        // Initialize Round Robin Quantum field
+        roundRobinQuantumField = new JTextField(10);
+        roundRobinQuantumField.setToolTipText("Round Robin Time Quantum");
+        roundRobinQuantumField.setText(String.valueOf(roundRobinQuantum));
+        roundRobinQuantumField.setEnabled(schedulingType.equals("FCAI"));
 
         // Color Button
         colorButton = new JButton("Choose Color");
@@ -249,7 +262,12 @@ public class CPUSchedulerMainWindow extends JFrame {
             }
 
             int contextSwtichingTime = Integer.parseInt(contextSwitchingTimeField.getText());
-            int priority = Integer.parseInt(priorityField.getText());
+            int priority;
+            if (schedulingType.equals("SJF") || schedulingType.equals("SRTF")) {
+                 priority = 0;}
+            else {
+                 priority = Integer.parseInt(priorityField.getText());
+            }
             int arrivalTime = Integer.parseInt(arrivalTimeField.getText());
             int burstTime = Integer.parseInt(burstTimeField.getText());
 

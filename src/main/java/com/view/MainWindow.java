@@ -7,7 +7,7 @@ public class MainWindow extends JFrame {
     private JTextField contextSwitchingTimeField;
     private JComboBox<String> schedulingTypeComboBox;
     private JTextField numberOfProcessesField;
-    private JTextField roundRobinQuantumField;
+
 
     public MainWindow() {
         initializeComponents();
@@ -39,16 +39,9 @@ public class MainWindow extends JFrame {
         numberOfProcessesField = new JTextField(10);
         numberOfProcessesField.setToolTipText("Total number of processes");
 
-        // Round Robin Time Quantum Field (initially disabled)
-        roundRobinQuantumField = new JTextField(10);
-        roundRobinQuantumField.setToolTipText("Time quantum for Round Robin");
-        roundRobinQuantumField.setEnabled(false);
 
-        // Enable/Disable Round Robin Quantum based on selection
-        schedulingTypeComboBox.addActionListener(e -> {
-            boolean isRoundRobin = schedulingTypeComboBox.getSelectedItem().equals("FCAI");
-            roundRobinQuantumField.setEnabled(isRoundRobin);
-        });
+
+
     }
 
     private void createLayout() {
@@ -82,15 +75,10 @@ public class MainWindow extends JFrame {
         gbc.gridx = 1;
         add(numberOfProcessesField, gbc);
 
-        // Round Robin Time Quantum Label and Field
-        gbc.gridy = 4;
-        gbc.gridx = 0;
-        add(new JLabel("Round Robin Quantum:"), gbc);
-        gbc.gridx = 1;
-        add(roundRobinQuantumField, gbc);
+
 
         // Context Switching Time Label and Field
-        gbc.gridy = 5;
+        gbc.gridy = 4;
         gbc.gridx = 0;
         add(new JLabel("Context Switching Time (ms):"), gbc);
         gbc.gridx = 1;
@@ -100,7 +88,7 @@ public class MainWindow extends JFrame {
         JButton proceedButton = new JButton("Proceed to Scheduler");
         proceedButton.addActionListener(e -> openSchedulerWindow());
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy = 5;
         gbc.gridwidth = 2;
         add(proceedButton, gbc);
     }
@@ -119,14 +107,7 @@ public class MainWindow extends JFrame {
             int numberOfProcesses = Integer.parseInt(numberOfProcessesField.getText());
             int contextSwitchingTime = Integer.parseInt(contextSwitchingTimeField.getText());
 
-            // Validate Round Robin Quantum if Round Robin is selected
-            int roundRobinQuantum = 0;
-            if (schedulingType.equals("Round Robin")) {
-                roundRobinQuantum = Integer.parseInt(roundRobinQuantumField.getText());
-                if (roundRobinQuantum <= 0) {
-                    throw new IllegalArgumentException("Round Robin Quantum must be positive");
-                }
-            }
+
 
             // Input validation
             if (numberOfProcesses <= 0 || contextSwitchingTime < 0) {
@@ -137,7 +118,6 @@ public class MainWindow extends JFrame {
             CPUSchedulerMainWindow schedulerWindow = new CPUSchedulerMainWindow(
                     schedulingType,
                     numberOfProcesses,
-                    roundRobinQuantum,
                     contextSwitchingTime
             );
             schedulerWindow.setVisible(true);
