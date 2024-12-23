@@ -8,9 +8,11 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+
 import main.java.com.factory.SchedulerFactory;
 import main.java.com.model.CPUProcess;
 import main.java.com.strategy.SchedulingStrategy;
+
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Set;
@@ -59,6 +61,7 @@ public class CPUSchedulerMainWindow extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
     }
+
     // Default constructor
     public CPUSchedulerMainWindow() {
     }
@@ -266,9 +269,9 @@ public class CPUSchedulerMainWindow extends JFrame {
             int contextSwtichingTime = Integer.parseInt(contextSwitchingTimeField.getText());
             int priority;
             if (schedulingType.equals("SJF") || schedulingType.equals("SRTF")) {
-                 priority = 0;}
-            else {
-                 priority = Integer.parseInt(priorityField.getText());
+                priority = 0;
+            } else {
+                priority = Integer.parseInt(priorityField.getText());
             }
             int quantum = 0; // Default quantum
             if (schedulingType.equalsIgnoreCase("FCAI")) {
@@ -319,9 +322,9 @@ public class CPUSchedulerMainWindow extends JFrame {
 
             // Choose a new random color for the next process
             currentColor = new Color(
-                    (int)(Math.random() * 256),
-                    (int)(Math.random() * 256),
-                    (int)(Math.random() * 256)
+                    (int) (Math.random() * 256),
+                    (int) (Math.random() * 256),
+                    (int) (Math.random() * 256)
             );
             colorButton.setBackground(currentColor);
 
@@ -366,17 +369,10 @@ public class CPUSchedulerMainWindow extends JFrame {
             // FCAI Messages
             if (scheduler instanceof FCAIScheduling) {
                 FCAIScheduling fcaiScheduler = (FCAIScheduling) scheduler;
-                List<String> messages = fcaiScheduler.getOutputMessages();
-                List<String> timeline = fcaiScheduler.getGanttTimeline(); // Fetch timeline
+                List<String> messages = fcaiScheduler.getOutputMessages();// Fetch timeline
                 outputArea.append("\nFCAI Messages:\n");
                 for (String message : messages) {
                     outputArea.append(message + "\n");
-                }
-
-                // Render Gantt timeline
-                outputArea.append("\nGantt Chart Timeline:\n");
-                for (String event : timeline) {
-                    outputArea.append(event + "\n");
                 }
             }
 
@@ -418,7 +414,7 @@ public class CPUSchedulerMainWindow extends JFrame {
         public Component getTableCellRendererComponent(JTable table, Object color,
                                                        boolean isSelected, boolean hasFocus, int row, int column) {
             if (color instanceof Color) {
-                setBackground((Color)color);
+                setBackground((Color) color);
             }
             return this;
         }
@@ -494,12 +490,13 @@ class GanttChartPanel extends JPanel {
         if (!processes.isEmpty()) {
             int currentTime = 0;
             List<TimeSlot> actualTimeSlots = new ArrayList<>();
+            CPUProcess lastProcess = null;
 
             for (int i = 0; i < processes.size(); i++) {
-                CPUProcess process = processes.get(i);
+                CPUProcess currentProcess = processes.get(i);
 
-                // Add context switching time before process starts (except for the first process)
-                if (i > 0) {
+                // Add context switching time between different processes
+                if (lastProcess != null && !lastProcess.getName().equals(currentProcess.getName())) {
                     TimeSlot contextSwitchSlot = new TimeSlot(
                             null,
                             currentTime,
@@ -510,17 +507,56 @@ class GanttChartPanel extends JPanel {
                     currentTime += contextSwitchingTime;
                 }
 
-                // Process execution time
+                // Calculate actual execution duration for this segment
+                int executionDuration;
+
+                // Look ahead to find when this process appears next or ends
+                if (i < processes.size() - 1) {
+                    int nextOccurrence = -1;
+                    for(int j = i + 1; j < processes.size(); j++) {
+                        if(processes.get(j).getName().equals(currentProcess.getName())) {
+                            nextOccurrence = j;
+                            break;
+                        }
+                    }
+
+                    if(nextOccurrence != -1) {
+                        // Process will be preempted - calculate time until next process
+                        executionDuration = 0;
+                        for(int j = i + 1; j < nextOccurrence; j++) {
+                            if(!processes.get(j).getName().equals(currentProcess.getName())) {
+                                executionDuration++;
+                            }
+                        }
+                    } else {
+                        // This is the final occurrence of this process
+                        executionDuration = currentProcess.getBurstTime();
+                        for(TimeSlot slot : actualTimeSlots) {
+                            if(slot.process != null && slot.process.getName().equals(currentProcess.getName())) {
+                                executionDuration -= slot.duration;
+                            }
+                        }
+                    }
+                } else {
+                    // Last process in the sequence
+                    executionDuration = currentProcess.getBurstTime();
+                    for(TimeSlot slot : actualTimeSlots) {
+                        if(slot.process != null && slot.process.getName().equals(currentProcess.getName())) {
+                            executionDuration -= slot.duration;
+                        }
+                    }
+                }
+
                 TimeSlot processSlot = new TimeSlot(
-                        process,
+                        currentProcess,
                         currentTime,
-                        process.getBurstTime(),
+                        executionDuration,
                         false
                 );
                 actualTimeSlots.add(processSlot);
+                currentTime += executionDuration;
 
-                // Update current time
-                currentTime += process.getBurstTime();
+                lastProcess = currentProcess;
             }
 
             this.timeSlots = actualTimeSlots;
@@ -558,7 +594,7 @@ class GanttChartPanel extends JPanel {
         // Draw process names
         for (Map.Entry<String, Integer> entry : processRows.entrySet()) {
             g2d.setColor(Color.BLACK);
-            g2d.drawString(entry.getKey(), 10, yOffset + entry.getValue() * rowHeight + rowHeight/2 + 5);
+            g2d.drawString(entry.getKey(), 10, yOffset + entry.getValue() * rowHeight + rowHeight / 2 + 5);
         }
 
         // Draw time slots
@@ -622,7 +658,7 @@ class GanttChartPanel extends JPanel {
             String timeStr = String.valueOf(t);
             int stringWidth = metrics.stringWidth(timeStr);
 
-            g2d.drawString(timeStr, x - stringWidth/2, 20);
+            g2d.drawString(timeStr, x - stringWidth / 2, 20);
             g2d.drawLine(x, 25, x, 30);
         }
     }
