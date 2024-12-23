@@ -5,8 +5,7 @@ import main.java.com.utils.SchedulingUtils;
 import java.util.*;
 
 public class FCAIScheduling implements SchedulingStrategy {
-    List<String> output = new ArrayList<>();
-    List<String> ganttTimeline = new ArrayList<>();
+    private List<String> output = new ArrayList<>();
 
     @Override
     public List<CPUProcess> schedule(List<CPUProcess> processes, int contextSwitchTime) {
@@ -21,165 +20,129 @@ public class FCAIScheduling implements SchedulingStrategy {
         int currentTime = 0;
 
         while (!processes.isEmpty() || !readyQueue.isEmpty()) {
-            // Add arriving processes to the ready queue
-            Iterator<CPUProcess> iterator = processes.iterator();
-            while (iterator.hasNext()) {
-                CPUProcess process = iterator.next();
-                if (process.getArrivalTime() <= currentTime) {
-                    readyQueue.addLast(process);
-                    iterator.remove();
-                }
-            }
+            // Add arriving processes to ready queue
+            addArrivingProcesses(processes, readyQueue, currentTime);
 
             if (!readyQueue.isEmpty()) {
                 CPUProcess currentProcess = readyQueue.pollFirst();
-                ganttTimeline.add("Time " + currentTime + ": " + currentProcess.getName() + " starts execution.");
 
+                // Calculate non-preemptive portion (40% of quantum)
                 double quantum = currentProcess.getQuantum();
                 double execTime = Math.ceil(quantum * 0.4);
-                double unusedQuantum = quantum - execTime;
                 execTime = Math.min(execTime, currentProcess.getRemainingTime());
+
+                // Execute non-preemptive portion
+                output.add(String.format("Time %d: Process %s starts non-preemptive execution for %.0f units",
+                        currentTime, currentProcess.getName(), execTime));
+
                 currentTime += execTime;
                 currentProcess.setRemainingTime(currentProcess.getRemainingTime() - (int)execTime);
+                double remainingQuantum = quantum - execTime;
                 currentProcess.setFCAIFactor(Math.ceil(SchedulingUtils.calculateFCAIFactor(currentProcess, v1, v2)));
 
-                iterator = processes.iterator();
-                while (iterator.hasNext()) {
-                    CPUProcess newProcess = iterator.next();
-                    if (newProcess.getArrivalTime() <= currentTime) {
-                        readyQueue.addLast(newProcess);
-                        iterator.remove();
-                    }
-                }
-
-                CPUProcess preemptive = null ;
-                for (CPUProcess process : readyQueue) {
-                    if (process.getFCAIFactor() <= currentProcess.getFCAIFactor()) {
-                        preemptive = process;
-                    }
-                }
-
-                if (preemptive != null) {
-                    ganttTimeline.add("Time " + currentTime + ": " + currentProcess.getName() + " starts execution.");
-                    currentProcess.setQuantum(currentProcess.getQuantum() + (int)unusedQuantum);
-                    readyQueue.addLast(currentProcess);
-                    currentProcess.setFCAIFactor(Math.ceil(SchedulingUtils.calculateFCAIFactor(currentProcess, v1, v2)));
-
-                    CPUProcess process = readyQueue.stream()
-                            .min(Comparator.comparingDouble(CPUProcess::getFCAIFactor))
-                            .orElse(null);
-
-                    readyQueue.remove(process);
-                    readyQueue.addFirst(process);
-                    output.add(("Time " +currentTime + ": Process "+currentProcess.getName()+
-                                    " executed for 1 unit\nRemaining Burst Time: "+currentProcess.getRemainingTime()+
-                                    ", Remaining Quantum: "+currentProcess.getQuantum()+", FCAI Factor: "+currentProcess.getFCAIFactor() +"\n"));
-                    output.add(("Process " + preemptive.getName() + " preempted " + currentProcess.getName()));
-                    continue;
-                }
+                // Check completion after non-preemptive portion
                 if (currentProcess.getRemainingTime() <= 0) {
-                    ganttTimeline.add("Time " + currentTime + ": " + currentProcess.getName() + " starts execution.");
-                    currentProcess.setTurnAroundTime(currentTime - currentProcess.getArrivalTime());
-                    currentProcess.setWaitingTime(currentProcess.getTurnAroundTime() - currentProcess.getBurstTime());
-                    output.add(("Time " +currentTime + ": Process "+currentProcess.getName()+
-                            " executed for 1 unit\nRemaining Burst Time: "+currentProcess.getRemainingTime()+
-                            ", Remaining Quantum: "+currentProcess.getQuantum()+", FCAI Factor: Completed" +"\n"));
-                    output.add(("Time "+currentTime+": Process "+currentProcess.getName()+" completed.\n\n"));
-                    scheduledProcesses.add(currentProcess);
+                    completeProcess(currentProcess, currentTime, scheduledProcesses);
                     continue;
                 }
 
-                while (currentProcess.getRemainingTime() > 0 && unusedQuantum > 0) {
-                    // Execute the process for 1 unit of time
-                    int remainTime = currentProcess.getRemainingTime() - 1;
-                    currentProcess.setRemainingTime(remainTime);
-                    unusedQuantum--;
-                    currentTime++;
+                // Add any processes that arrived during non-preemptive execution
+                addArrivingProcesses(processes, readyQueue, currentTime);
 
-                    // Update FCAI factor for the current process
-                    currentProcess.setFCAIFactor(Math.ceil(SchedulingUtils.calculateFCAIFactor(currentProcess, v1, v2)));
-                    ganttTimeline.add("Time " + currentTime + ": " + currentProcess.getName() + " starts execution.");
-
-                    //print completed
-                    if (currentProcess.getRemainingTime() <= 0) {
-                        currentProcess.setTurnAroundTime(currentTime - currentProcess.getArrivalTime());
-                        currentProcess.setWaitingTime(currentProcess.getTurnAroundTime() - currentProcess.getBurstTime());
-                        output.add(("Time " +currentTime + ": Process "+currentProcess.getName()+
-                                " executed for 1 unit\nRemaining Burst Time: "+currentProcess.getRemainingTime()+
-                                ", Remaining Quantum: "+currentProcess.getQuantum()+", FCAI Factor: Completed " +"\n"));
-                        output.add(("Time "+currentTime+": Process "+currentProcess.getName()+" completed.\n\n"));
-                        scheduledProcesses.add(currentProcess);
-                        break;
-                    }
-                    output.add(("Time " +currentTime + ": Process "+currentProcess.getName()+
-                            " executed for 1 unit\nRemaining Burst Time: "+currentProcess.getRemainingTime()+
-                            ", Remaining Quantum: "+currentProcess.getQuantum()+", FCAI Factor: "+currentProcess.getFCAIFactor() +"\n"));
-
-                    // Check for newly arriving processes and add them to the ready queue
-                    iterator = processes.iterator();
-                    while (iterator.hasNext()) {
-                        CPUProcess newProcess = iterator.next();
-                        if (newProcess.getArrivalTime() <= currentTime) {
-                            readyQueue.addLast(newProcess);
-                            iterator.remove();
-                        }
-                    }
-
-                    preemptive = null ;
-                    for (CPUProcess process : readyQueue) {
-                        if (process.getFCAIFactor() <= currentProcess.getFCAIFactor()) {
-                            preemptive = process;
-                        }
-                    }
-
-                    if (preemptive != null) {
-                        ganttTimeline.add("Time " + currentTime + ": " + currentProcess.getName() + " starts execution.");
-                        currentProcess.setQuantum(currentProcess.getQuantum() + (int)unusedQuantum);
-                        readyQueue.addLast(currentProcess);
-                        currentProcess.setFCAIFactor(Math.ceil(SchedulingUtils.calculateFCAIFactor(currentProcess, v1, v2)));
-
-                        CPUProcess process = readyQueue.stream()
-                                .min(Comparator.comparingDouble(CPUProcess::getFCAIFactor))
-                                .orElse(null);
-
-                        readyQueue.remove(process);
-                        readyQueue.addFirst(process);
-                        break;
-                    }
-
-                    //print completed
-                    if (currentProcess.getRemainingTime() <= 0) {
-                        ganttTimeline.add("Time " + currentTime + ": " + currentProcess.getName() + " starts execution.");
-                        currentProcess.setTurnAroundTime(currentTime - currentProcess.getArrivalTime());
-                        currentProcess.setWaitingTime(currentProcess.getTurnAroundTime() - currentProcess.getBurstTime());
-                        output.add(("Time " +currentTime + ": Process "+currentProcess.getName()+
-                                " executed for 1 unit\nRemaining Burst Time: "+currentProcess.getRemainingTime()+
-                                ", Remaining Quantum: "+currentProcess.getQuantum()+", FCAI Factor: Completed" +"\n"));
-                        output.add(("Time "+currentTime+": Process "+currentProcess.getName()+" completed.\n\n"));
-                        scheduledProcesses.add(currentProcess);
-                        break;
-                    }
-                    else if (unusedQuantum <= 0){
-                        currentProcess.setQuantum(currentProcess.getQuantum() + 2);
-                        readyQueue.addLast(currentProcess);
-                        break;
-                    }
+                CPUProcess preemptingProcess = findPreemptingProcess(readyQueue, currentProcess);
+                if (preemptingProcess != null) {
+                    // Handle preemption
+                    Preemption(scheduledProcesses, readyQueue, currentTime, currentProcess, (int) remainingQuantum, preemptingProcess);
+                    continue;
                 }
-            }
-            else {
-                // If no process is ready, increment time
-                ganttTimeline.add("Time " + currentTime + ": Idle");
+
+                // Preemptive portion
+                while (currentProcess.getRemainingTime() > 0 && remainingQuantum > 0) {
+                    // Execute one time unit
+                    currentTime++;
+                    currentProcess.setRemainingTime(currentProcess.getRemainingTime() - 1);
+                    remainingQuantum--;
+                    currentProcess.setFCAIFactor(Math.ceil(SchedulingUtils.calculateFCAIFactor(currentProcess, v1, v2)));
+
+                    // Add any new arriving processes
+                    addArrivingProcesses(processes, readyQueue, currentTime);
+
+                    // Check for completion
+                    if (currentProcess.getRemainingTime() <= 0) {
+                        completeProcess(currentProcess, currentTime, scheduledProcesses);
+                        break;
+                    }
+
+                    // Check for preemption
+                    preemptingProcess = findPreemptingProcess(readyQueue, currentProcess);
+                    if (preemptingProcess != null) {
+                        // Handle preemption
+                        Preemption(scheduledProcesses, readyQueue, currentTime, currentProcess, (int) remainingQuantum, preemptingProcess);
+                        break;
+                    }
+                    // Record execution progress
+                    output.add(String.format("Time %d: Process %s executed for 1 unit, Remaining Burst: %d, Quantum: %d, FCAI Factor: %.2f",
+                            currentTime, currentProcess.getName(), currentProcess.getRemainingTime(),
+                            currentProcess.getQuantum(), currentProcess.getFCAIFactor()));
+                }
+
+                // Handle quantum expiration if process not completed or preempted
+                if (currentProcess.getRemainingTime() > 0 && remainingQuantum <= 0) {
+                    currentProcess.setQuantum(currentProcess.getQuantum() + 2);
+                    output.add(String.format("Time %d: Process %s quantum expired, new quantum: %d",
+                            currentTime, currentProcess.getName(), currentProcess.getQuantum()));
+                    readyQueue.addLast(currentProcess);
+                    scheduledProcesses.add(currentProcess);
+                }
+            } else {
                 currentTime++;
             }
         }
         return scheduledProcesses;
     }
 
+    private void addArrivingProcesses(List<CPUProcess> processes, Deque<CPUProcess> readyQueue, int currentTime) {
+        Iterator<CPUProcess> iterator = processes.iterator();
+        while (iterator.hasNext()) {
+            CPUProcess process = iterator.next();
+            if (process.getArrivalTime() <= currentTime) {
+                readyQueue.addLast(process);
+                iterator.remove();
+                output.add(String.format("Time %d: Process %s arrived", currentTime, process.getName()));
+            }
+        }
+    }
+
+    private void Preemption(List<CPUProcess> scheduledProcesses, Deque<CPUProcess> readyQueue, int currentTime, CPUProcess currentProcess, int remainingQuantum, CPUProcess preemptingProcess) {
+        currentProcess.setQuantum(currentProcess.getQuantum() + remainingQuantum);
+        output.add(String.format("Time %d: Process %s preempted by Process %s - Process %s : Remaining Burst %d - Quantum %d - FCAI Factor %f",
+                currentTime, currentProcess.getName(), preemptingProcess.getName(), currentProcess.getName(), currentProcess.getRemainingTime(),
+                currentProcess.getQuantum(), currentProcess.getFCAIFactor()));
+        readyQueue.addLast(currentProcess);
+        readyQueue.remove(preemptingProcess);
+        readyQueue.addFirst(preemptingProcess);
+
+        scheduledProcesses.add(currentProcess);
+    }
+
+    private CPUProcess findPreemptingProcess(Deque<CPUProcess> readyQueue, CPUProcess currentProcess) {
+        for (CPUProcess process : readyQueue) {
+            if (process.getFCAIFactor() <= currentProcess.getFCAIFactor())
+                return process;
+        }
+        return null;
+    }
+
+    private void completeProcess(CPUProcess process, int currentTime, List<CPUProcess> scheduledProcesses) {
+        process.setTurnAroundTime(currentTime - process.getArrivalTime());
+        process.setWaitingTime(process.getTurnAroundTime() - process.getBurstTime());
+        output.add(String.format("Time %d: Process %s completed\n",
+                currentTime, process.getName()));
+        scheduledProcesses.add(process);
+    }
+
     public List<String> getOutputMessages() {
         return output;
     }
 
-    public List<String> getGanttTimeline() {
-        return ganttTimeline;
-    }
 }
